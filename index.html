@@ -643,6 +643,11 @@ function AuthProvider({
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     let subscription = null;
+    let done = false;
+    // Hard ceiling: show auth screen after 4s no matter what
+    const timeout = setTimeout(() => {
+      if (!done) { done = true; setLoading(false); }
+    }, 4000);
     async function init() {
       try {
         const sb = await getSB();
@@ -653,11 +658,12 @@ function AuthProvider({
       } catch(err) {
         console.error('ProfPrep auth init error:', err);
       } finally {
-        setLoading(false);
+        clearTimeout(timeout);
+        if (!done) { done = true; setLoading(false); }
       }
     }
     init();
-    return () => { try { subscription?.unsubscribe?.(); } catch(e) {} };
+    return () => { clearTimeout(timeout); try { subscription?.unsubscribe?.(); } catch(e) {} };
   }, []);
   return /*#__PURE__*/React.createElement(AuthCtx.Provider, {
     value: {
